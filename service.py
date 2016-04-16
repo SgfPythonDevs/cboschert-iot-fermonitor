@@ -1,35 +1,47 @@
 #!/usr/bin/python
 import argparse
 from datetime import datetime
-from random import randint
 from time import sleep
-from common import DbRepo, farenheit_to_celcius
+from common import DbRepo, celcius_to_farenheit
+import RPi.GPIO as GPIO
+import dht11
 
-last_f, last_h = 720, 500
+# initialize GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.cleanup()
+
+# read data using pin 4
+instance = dht11.DHT11(pin = 4)
 
 
 def read():
-    global last_f, last_h
+    err_count = 0
+    while err_count < 50:
+        result = instance.read()
+	if result.is_valid():
+            err_count = 0
+            n = datetime.now()
+            c = round(result.temperature, 1)
+            f = round(celcius_to_farenheit(result.temperature), 1)
+            h = round(result.humidity, 1)
+            return n, c, f, h
+	else:  		
+            err_count += 1
 
-    last_f = randint(last_f - 30, last_f + 30)
-    last_h = randint(last_h - 30, last_h + 30)
-
-    if last_h > 1000:
-        last_h = 1000
-
-    if last_h < 0:
-        last_h = 0
-
-    f = last_f * 0.1
-
-    return round(f, 1), round(farenheit_to_celcius(f),1), round(last_h * 0.1, 1)
+    raise Exception()
 
 
 def run(location, poll_interval=60):
     db = DbRepo()
     while True:
-        f, c, h = read()
-        db.add_temp(datetime.now(), location, c, f, h)
+        try:
+            n, c, f, h = read()
+        except Exception:
+            print('oops')
+            continue
+        
+        db.add_temp(n, location, c, f, h)
         print(c, f, h)
         sleep(poll_interval)
 
