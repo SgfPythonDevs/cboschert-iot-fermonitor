@@ -1,4 +1,5 @@
 from pymongo import MongoClient, DESCENDING
+from bson.son import SON
 
 COLL_NAME_TEMP_LOG = 'temp_log'
 
@@ -43,3 +44,29 @@ class DbRepo:
         results = list(cursor)
 
         return results
+
+    def get_stats(self, location):
+        # https://api.mongodb.org/python/current/examples/aggregation.html
+        # https://docs.mongodb.org/manual/reference/operator/aggregation/
+        col = self.db[COLL_NAME_TEMP_LOG]
+        details = list(col.aggregate([
+            {"$match": { "where": location}},
+            {"$project": {"date": {"$dateToString":{"format": "%Y-%m-%d", "date": "$when"}},
+                          "hour": {"$hour": "$when"},
+                          "temp_c": 1, "temp_f": 1, "humidity": 1}},
+            {"$group": {"_id": {"date": "$date", "hour": "$hour"},
+                        "avg_c": {"$avg": "$temp_c"},
+                        "avg_f": {"$avg": "$temp_f"},
+                        "avg_rh": {"$avg": "$humidity"},
+                        "num_of_measures": {"$sum": 1}}},
+            {"$sort": SON([("_id.date", -1), ("_id.hour", -1)])},
+            {"$limit": 168}
+        ]))
+
+        most_recent = col.find({'where': location}).sort("when", DESCENDING).limit(1)[0]
+
+        return {
+            "most_recent": most_recent,
+            "details": details
+        }
+

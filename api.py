@@ -6,7 +6,7 @@ from datetime import datetime
 from bson import objectid
 from common import celcius_to_farenheit
 from common import DbRepo
-from flask import Flask
+from flask import Flask, render_template
 
 # Host in Tornado: http://hilpisch.com/rpi/03_web_apps.html
 # Basic Auth: http://flask.pocoo.org/snippets/8/
@@ -49,6 +49,17 @@ in
     enc = CustomEncoder()
 
     return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
+
+
+@app.route('/dashboard/<where>')
+def dashboard(where):
+    # http://flask.pocoo.org/docs/0.10/tutorial/templates/
+    repo = DbRepo()
+    results = repo.get_stats(where)
+    enc = CustomEncoder()
+
+    #return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
+    return render_template('dashboard.html', ctx=results)
 
 
 if __name__ == '__main__':
