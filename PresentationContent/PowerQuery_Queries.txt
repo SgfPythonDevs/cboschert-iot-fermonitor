@@ -1,0 +1,31 @@
+// PowerQuery (M code) to pull hourly stats into Excel for analysis and visualization
+
+let
+    Source = Json.Document(Web.Contents("http://fermonitor:5000/stats/office")),
+    details = Source[details],
+    #"Converted to Table" = Table.FromList(details, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"num_of_measures", "_id", "avg_f", "avg_rh", "avg_c"}, {"num_of_measures", "_id", "avg_f", "avg_rh", "avg_c"}),
+    #"Expanded _id" = Table.ExpandRecordColumn(#"Expanded Column1", "_id", {"year", "day", "hour", "month"}, {"year", "day", "hour", "month"}),
+    #"Added Custom" = Table.AddColumn(#"Expanded _id", "date", each Number.ToText([year]) & "-" & Number.ToText([month]) & "-" & Number.ToText([day])),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "datetime", each Number.ToText([year]) & "-" & Number.ToText([month]) & "-" & Number.ToText([day]) & " " & Number.ToText([hour]) & ":00"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Added Custom1",{{"date", type date}, {"datetime", type datetime}}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Changed Type",{"datetime", "avg_rh", "avg_f"}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Removed Other Columns",{"datetime", "avg_f", "avg_rh"}),
+    #"Sorted Rows" = Table.Sort(#"Reordered Columns",{{"datetime", Order.Ascending}}),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Sorted Rows",{"datetime", "avg_rh", "avg_f"})
+in
+    #"Reordered Columns1"
+
+
+
+// PowerQuery (M code) to pull measurment details into Excel for analysis and visualization
+
+let
+    Source = Json.Document(Web.Contents("http://fermonitor:5000/recent/office/1000")),
+    #"Converted to Table" = Table.FromList(Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"temp_f", "when", "temp_c", "humidity"}, {"temp_f", "when", "temp_c", "humidity"}),
+    #"Sorted Rows" = Table.Sort(#"Expanded Column1",{{"when", Order.Ascending}}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Sorted Rows",{"when", "temp_f"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Reordered Columns",{{"when", type datetime}, {"temp_f", type number}, {"temp_c", type number}, {"humidity", type number}})
+in
+    #"Changed Type"
