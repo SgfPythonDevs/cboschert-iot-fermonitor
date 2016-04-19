@@ -23,15 +23,15 @@ def read():
     while err_count < 50:
         result = instance.read()
 
-    # When we get a valid reading, return the time, temps, and humidity
-    if result.is_valid():
-        n = datetime.now()
-        c = round(result.temperature, 1)
-        f = round(celsius_to_fahrenheit(result.temperature), 1)
-        h = round(result.humidity, 1)
-        return n, c, f, h
-    else:
-        err_count += 1
+        # When we get a valid reading, return the time, temps, and humidity
+        if result.is_valid():
+            n = datetime.now()
+            c = round(result.temperature, 1)
+            f = round(celsius_to_fahrenheit(result.temperature), 1)
+            h = round(result.humidity, 1)
+            return n, c, f, h
+        else:
+            err_count += 1
 
     # Throw an exception if we didn't get a reading from the sensor
     raise Exception()
