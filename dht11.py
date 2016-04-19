@@ -1,3 +1,4 @@
+# Thank you, https://github.com/szazo/DHT11_Python
 import time
 import RPi.GPIO as GPIO
 
