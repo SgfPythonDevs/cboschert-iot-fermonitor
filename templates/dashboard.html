@@ -48,7 +48,7 @@
           <tbody>
             {% for r in ctx.details %}
             <tr>
-              <td class="text-center">{{ r._id.date }}</td>
+              <td class="text-center">{{ r._id.year }}-{{ r._id.month }}-{{ r._id.day }}</td>
               <td class="text-center">{{ r._id.hour }}</td>
               <td class="text-right">{{ '%0.1f' % r.avg_f }}&deg;</td>
               <td class="text-right">{{ '%0.1f' % r.avg_c }}&deg;</td>

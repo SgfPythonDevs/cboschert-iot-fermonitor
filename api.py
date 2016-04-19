@@ -27,7 +27,12 @@ class CustomEncoder(json.JSONEncoder):
 
 @app.route('/')
 def index():
-    return '<a href="./recent/random/5">Go to API</a>', 200
+    repo = DbRepo()
+    locs = repo.get_locations()
+
+    bein_lazy = ['<a href="./dashboard/{0}">{0}</a> - {1} measurements, last on {2}'.format(x["_id"], x["num_of_measures"], x['most_recent']) for x in locs]
+    
+    return '<br />'.join(bein_lazy), 200
 
 
 @app.route('/recent/<where>', defaults={'max': 10})
@@ -51,6 +56,15 @@ in
     return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
 
 
+@app.route('/stats/<where>')
+def stats(where):
+    repo = DbRepo()
+    results = repo.get_stats(where)
+    enc = CustomEncoder()
+
+    return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
+
+
 @app.route('/dashboard/<where>')
 def dashboard(where):
     # http://flask.pocoo.org/docs/0.10/tutorial/templates/
@@ -58,7 +72,6 @@ def dashboard(where):
     results = repo.get_stats(where)
     enc = CustomEncoder()
 
-    #return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
     return render_template('dashboard.html', ctx=results)
 
 
