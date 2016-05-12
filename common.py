@@ -2,6 +2,7 @@ from pymongo import MongoClient, DESCENDING
 from bson.son import SON
 
 COLL_NAME_TEMP_LOG = 'temp_log'
+COLL_NAME_CONFIG = 'config'
 
 
 def fahrenheit_to_celsius(f_degrees):
@@ -24,6 +25,24 @@ class DbRepo:
         self.db = None
         self.client.close()
         self.client = None
+
+    def set_target_temp(self, temp_c):
+        col = self.db[COLL_NAME_CONFIG]
+
+        if temp_c:
+            result = col.update({"_id": "target_temp"}, {"_id": "target_temp", "value": temp_c}, upsert=True)
+            return result.n == 1
+        else:
+            result = col.remove("target_temp")
+            return True
+
+    def get_target_temp(self):
+        col = self.db[COLL_NAME_CONFIG]
+        target = col.find_one("target_temp")
+        if target:
+            return target["value"]
+
+        return None
 
     def add_measurement(self, when, where, temp_c, temp_f, humidity):
         """Writes a single temperature and humidity reading to the DB."""
