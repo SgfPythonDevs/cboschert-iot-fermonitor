@@ -6,15 +6,6 @@ from common import DbRepo, celsius_to_fahrenheit
 import RPi.GPIO as GPIO
 import dht11
 
-# initialize GPIO
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.cleanup()
-
-# read data using pin 4
-instance = dht11.DHT11(pin = 4)
-
-
 def read():
     """Reads the current temperature and humidity from attached DHT11"""
     # The DHT11 library uses polling which can be unreliable. We retry up to 50 times
@@ -56,16 +47,26 @@ def run(location, poll_interval=60):
         sleep(poll_interval)
 
 
-if __name__ == "__main__":
-    # Parse command line arguments to get service settings
-    parser = argparse.ArgumentParser(
-        description="Starts the Monitoring Service",
-        prog="service.py")
-    parser.add_argument('location', help='The value stored in the where field of temperature log entries.')
-    parser.add_argument('-i', '-interval', help='The number of seconds between temperature readings. DEFAULT %(default)s', type=int, default=60)
+try:
+    # initialize GPIO
+    GPIO.setmode(GPIO.BCM)
 
-    args = parser.parse_args()
-    print('Running {} with [{}]'.format(parser.prog, args))
+    # read data using pin 4
+    instance = dht11.DHT11(pin = 4)
 
-    # Start the application loop
-    run(args.location, args.i)
+    if __name__ == "__main__":
+        # Parse command line arguments to get service settings
+        parser = argparse.ArgumentParser(
+            description="Starts the Monitoring Service",
+            prog="service.py")
+        parser.add_argument('location', help='The value stored in the where field of temperature log entries.')
+        parser.add_argument('-i', '-interval', help='The number of seconds between temperature readings. DEFAULT %(default)s', type=int, default=60)
+
+        args = parser.parse_args()
+        print('Running {} with [{}]'.format(parser.prog, args))
+
+        # Start the application loop
+        run(args.location, args.i)
+finally:
+    # This will set all the GPIO pins we used back to inputs
+    GPIO.cleanup()
