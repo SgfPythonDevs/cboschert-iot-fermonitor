@@ -43,6 +43,20 @@ def run(location, poll_interval=60):
         db.add_measurement(n, location, c, f, h)
         print(c, f, h)
 
+        # If set, manage target temp
+        target_c = db.get_target_temp()
+        if target_c:
+            if GPIO.input(pst_pin): # Heater is on
+                if c >= target_c + 1: # heat to +1C to prevent frequent cycling
+                    GPIO.output(pst_pin, False)
+            else: # heater is off
+                if c < target_c: # turn heater on when we drop below target temp
+                    GPIO.output(pst_pin, True)
+        else: # no target temp is configured, ensure heater is off
+            if GPIO.input(pst_pin):
+                GPIO.output(pst_pin, False)
+
+        
         # Sleep until the next interval
         sleep(poll_interval)
 
@@ -51,8 +65,15 @@ try:
     # initialize GPIO
     GPIO.setmode(GPIO.BCM)
 
-    # read data using pin 4
+
+    # control PowerSwitch Tail data using pin 7
+    pst_pin = 7
+    GPIO.setup(pst_pin, GPIO.OUT)
+    GPIO.output(pst_pin, False)
+    
+    # read DHT11 data using pin 4
     instance = dht11.DHT11(pin = 4)
+
 
     if __name__ == "__main__":
         # Parse command line arguments to get service settings
@@ -69,4 +90,5 @@ try:
         run(args.location, args.i)
 finally:
     # This will set all the GPIO pins we used back to inputs
+    GPIO.output(pst_pin, False)
     GPIO.cleanup()
