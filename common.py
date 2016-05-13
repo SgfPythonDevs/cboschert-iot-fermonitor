@@ -30,7 +30,7 @@ class DbRepo:
         col = self.db[COLL_NAME_CONFIG]
 
         if temp_c:
-            col.update_one({"_id": "target_temp"}, { '$set': {"_id": "target_temp", "value": temp_c}}, upsert=True)
+            col.update({"_id": "target_temp"}, {"_id": "target_temp", "value": temp_c}, upsert=True)
         else:
             col.remove("target_temp")
 
