@@ -5,7 +5,7 @@ from datetime import datetime
 
 from bson import objectid
 from common import DbRepo
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 
 '''In a production solution, you will not want to use the development
    web server. You may want authentication as well. Check out these links
@@ -36,14 +36,14 @@ def index():
 
     # Quick dev - just string together some anchor tags; most browsers won't complain.
     # Don't do this in the real world.
-    bein_lazy = ['<a href="./dashboard/{0}">{0}</a> - {1} measurements, last on {2}'.format(x["_id"], x["num_of_measures"], x['most_recent']) for x in locs]
+    bein_lazy = ['<a href="./dashboard/for/{0}">{0}</a> - {1} measurements, last on {2}'.format(x["_id"], x["num_of_measures"], x['most_recent']) for x in locs]
     
     return '<br />'.join(bein_lazy), 200
 
 
 # Example of providing default rounds
-@app.route('/recent/<where>', defaults={'max': 10})
-@app.route('/recent/<where>/<int:max>')
+@app.route('/api/recent/<where>', defaults={'max': 10})
+@app.route('/api/recent/<where>/<int:max>')
 def recent(where, max):
     repo = DbRepo()
     results = repo.query_recent_measurements(where, max)
@@ -53,7 +53,7 @@ def recent(where, max):
     return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
 
 
-@app.route('/stats/<where>')
+@app.route('/api/stats/<where>')
 def stats(where):
     repo = DbRepo()
     results = repo.get_stats(where)
@@ -62,15 +62,27 @@ def stats(where):
     return enc.encode(results), 200, {'Content-Type': 'text/json; charset=utf-8'}
 
 
-@app.route('/dashboard/<where>')
+@app.route('/dashboard/for/<where>')
 def dashboard(where):
     """Flask can actually serve web pages too. It uses Jinja2 templates"""
     # http://flask.pocoo.org/docs/0.10/tutorial/templates/
     repo = DbRepo()
     results = repo.get_stats(where)
-    enc = CustomEncoder()
 
-    return render_template('dashboard.html', ctx=results)
+    return render_template('dashboard.html', ctx={'data': results, 'target_temp_c': repo.get_target_temp()})
+
+
+@app.route('/dashboard/target-temp/', methods=['POST'])
+def set_target_temp():
+    repo = DbRepo()
+    try:
+        temp_c = float(request.form['temp_c'])
+    except ValueError:
+        temp_c = None
+
+    repo.set_target_temp(temp_c)
+
+    return redirect(request.form['redirect_url'])
 
 
 if __name__ == '__main__':

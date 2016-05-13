@@ -30,11 +30,9 @@ class DbRepo:
         col = self.db[COLL_NAME_CONFIG]
 
         if temp_c:
-            result = col.update({"_id": "target_temp"}, {"_id": "target_temp", "value": temp_c}, upsert=True)
-            return result.n == 1
+            col.update_one({"_id": "target_temp"}, { '$set': {"_id": "target_temp", "value": temp_c}}, upsert=True)
         else:
-            result = col.remove("target_temp")
-            return True
+            col.remove("target_temp")
 
     def get_target_temp(self):
         col = self.db[COLL_NAME_CONFIG]
