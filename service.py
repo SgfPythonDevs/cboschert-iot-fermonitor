@@ -39,14 +39,16 @@ def run(location, poll_interval=60):
             print('oops')
             continue
 
+        pst = GPIO.input(pst_pin)
+
         # Save it to the database
-        db.add_measurement(n, location, c, f, h)
-        print(c, f, h)
+        db.add_measurement(n, location, c, f, h, pst)
+        print(c, f, h, pst)
 
         # If set, manage target temp
         target_c = db.get_target_temp()
         if target_c:
-            if GPIO.input(pst_pin): # Heater is on
+            if pst: # Heater is on
                 if c >= target_c + 1: # heat to +1C to prevent frequent cycling
                     GPIO.output(pst_pin, False)
             else: # heater is off

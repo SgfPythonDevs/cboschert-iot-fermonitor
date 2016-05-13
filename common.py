@@ -42,7 +42,7 @@ class DbRepo:
 
         return None
 
-    def add_measurement(self, when, where, temp_c, temp_f, humidity):
+    def add_measurement(self, when, where, temp_c, temp_f, humidity, heating_state):
         """Writes a single temperature and humidity reading to the DB."""
         # In MongoDB collections are similar to tables in relational DBs.
         # We need get a reference to the collection before performing operations
@@ -56,7 +56,8 @@ class DbRepo:
             "where": where,
             "temp_c": temp_c,
             "temp_f": temp_f,
-            "humidity": humidity
+            "humidity": humidity,
+            "is_heating": float(heating_state)
         })
 
         # Most operations return some sort of results
@@ -118,12 +119,13 @@ class DbRepo:
                           "month": {"$month": "$when"},
                           "day": {"$dayOfMonth": "$when"},
                           "hour": {"$hour": "$when"},
-                          "temp_c": 1, "temp_f": 1, "humidity": 1}},
+                          "temp_c": 1, "temp_f": 1, "humidity": 1, "is_heating": 1}},
             # $group will perform calculations for the specified key's granularity.
             {"$group": {"_id": {"year": "$year", "month": "$month", "day": "$day", "hour": "$hour"},
                         "avg_c": {"$avg": "$temp_c"},
                         "avg_f": {"$avg": "$temp_f"},
                         "avg_rh": {"$avg": "$humidity"},
+                        "heat_rate": { "$avg": "$is_heating"},
                         "num_of_measures": {"$sum": 1}}},
             # Sort the results. In python, use SON() for sorting because Python
             # dictionaries are unordered.

@@ -23,16 +23,19 @@
     <div class="container">
       <h2>Last Reading</h2>
       <div class="row">
-        <div class="col-sm-4 text-center">
+        <div class="col-sm-3 text-center">
           <h1>{{ ctx.data.most_recent.temp_f }}&deg;</h1>
           <p>fahrenheit</p>
         </div>
-        <div class="col-sm-4 text-center">
+        <div class="col-sm-3 text-center">
           <h1>{{ ctx.data.most_recent.temp_c }}&deg;</h1>
           <p>celsius</p></div>
-        <div class="col-sm-4 text-center">
+        <div class="col-sm-3 text-center">
           <h1>{{ ctx.data.most_recent.humidity }}%</h1>
           <p>relative humidity</p></div>
+        <div class="col-sm-3 text-center">
+          <h1>{{ 'On' if ctx.data.most_recent.is_heating else 'Off' }}</h1>
+          <p>heater status</p></div>
       </div>
       <p>last updated {{ ctx.data.most_recent.when }}</p>
       <form action="{{url_for('set_target_temp')}}" method="post" class="form-inline">
@@ -50,6 +53,7 @@
             <th class="text-center">Avg F</th>
             <th class="text-center">Avg C</th>
             <th class="text-center">Avg RH</th>
+            <th class="text-center">Heater On %</th>
             <th class="text-center"># of Measures</th>
           </tr>
         </thead>
@@ -61,6 +65,7 @@
             <td class="text-right">{{ '%0.1f' % r.avg_f }}&deg;</td>
             <td class="text-right">{{ '%0.1f' % r.avg_c }}&deg;</td>
             <td class="text-right">{{ '%0.1f' % r.avg_rh }}%</td>
+            <td class="text-right">{{ '%0.3f' % r.heat_rate }}%</td>
             <td class="text-right">{{r.num_of_measures}}</td>
           </tr>
           {% endfor %}
