@@ -65,7 +65,7 @@
             <td class="text-right">{{ '%0.1f' % r.avg_f }}&deg;</td>
             <td class="text-right">{{ '%0.1f' % r.avg_c }}&deg;</td>
             <td class="text-right">{{ '%0.1f' % r.avg_rh }}%</td>
-            <td class="text-right">{{ '%0.3f' % r.heat_rate }}%</td>
+            <td class="text-right">{{ '%0.3f' % (r.heat_rate * 100) }}%</td>
             <td class="text-right">{{r.num_of_measures}}</td>
           </tr>
           {% endfor %}
