@@ -16,7 +16,7 @@ def celsius_to_fahrenheit(c_degrees):
 class DbRepo:
     """Provides a simple facade to our database."""
     def __init__(self, conn_string='mongodb://localhost:27017', db_name='pydev_demos'):
-        # Establis class level connection to the MongoDB instance and database
+        # Establis class level connection to the MongoDB temp_sensor and database
         self.client = MongoClient(conn_string)
         self.db = self.client[db_name]
 
@@ -27,6 +27,7 @@ class DbRepo:
         self.client = None
 
     def set_target_temp(self, temp_c):
+        """Upserts the target temperature in the config collection."""
         col = self.db[COLL_NAME_CONFIG]
 
         if temp_c:
@@ -35,6 +36,8 @@ class DbRepo:
             col.remove("target_temp")
 
     def get_target_temp(self):
+        """Returns the current target temp in degrees celsius if configured,
+        otherwise returns None."""
         col = self.db[COLL_NAME_CONFIG]
         target = col.find_one("target_temp")
         if target:
@@ -68,7 +71,7 @@ class DbRepo:
         col = self.db[COLL_NAME_TEMP_LOG]
 
         # Build a query to find the most recent measurements. The query isn't
-        # actually executed until we iterate over the returned cursor instance...
+        # actually executed until we iterate over the returned cursor temp_sensor...
         cursor = col.find({'where': location}).sort("when", DESCENDING)
 
         # ...this allows us to append additional operations to the cursor before

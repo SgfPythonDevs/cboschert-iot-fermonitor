@@ -6,13 +6,14 @@ from common import DbRepo, celsius_to_fahrenheit
 import RPi.GPIO as GPIO
 import dht11
 
+
 def read():
     """Reads the current temperature and humidity from attached DHT11"""
     # The DHT11 library uses polling which can be unreliable. We retry up to 50 times
     # if needed to get a valid reason. Rarely takes this many time in my testing though.
     err_count = 0
     while err_count < 50:
-        result = instance.read()
+        result = temp_sensor.read()
 
         # When we get a valid reading, return the time, temps, and humidity
         if result.is_valid():
@@ -29,7 +30,7 @@ def read():
 
 
 def run(location, poll_interval=60):
-    """The application loop for the Fermonitor service. Runs infinitely until terminated, Ctrl+Z on the Pi."""
+    """The application loop for the Fermonitor service. Runs infinitely until terminated, Ctrl+C on the Pi."""
     db = DbRepo()
     while True:
         try:
@@ -39,25 +40,25 @@ def run(location, poll_interval=60):
             print('oops')
             continue
 
+        # Get the current state of the PST switch; 1 = on, 0 = off
         pst = GPIO.input(pst_pin)
 
-        # Save it to the database
+        # Save it to the database log
         db.add_measurement(n, location, c, f, h, pst)
         print(c, f, h, pst)
 
-        # If set, manage target temp
+        # Read the current target temperature from config in the DB
         target_c = db.get_target_temp()
-        if target_c:
-            if pst: # Heater is on
-                if c >= target_c + 1: # heat to +1C to prevent frequent cycling
+        if target_c:  # If configured, maintain the target temperature
+            if pst:  # Heater is on
+                if c >= target_c + 1:  # heat to +1C to prevent frequent cycling
                     GPIO.output(pst_pin, False)
-            else: # heater is off
-                if c < target_c: # turn heater on when we drop below target temp
+            else:  # heater is off
+                if c < target_c:  # turn heater on when we drop below target temp
                     GPIO.output(pst_pin, True)
-        else: # no target temp is configured, ensure heater is off
+        else:  # no target temp is configured, ensure heater is off
             if GPIO.input(pst_pin):
                 GPIO.output(pst_pin, False)
-
         
         # Sleep until the next interval
         sleep(poll_interval)
@@ -67,15 +68,13 @@ try:
     # initialize GPIO
     GPIO.setmode(GPIO.BCM)
 
-
     # control PowerSwitch Tail data using pin 7
     pst_pin = 7
     GPIO.setup(pst_pin, GPIO.OUT)
     GPIO.output(pst_pin, False)
     
     # read DHT11 data using pin 4
-    instance = dht11.DHT11(pin = 4)
-
+    temp_sensor = dht11.DHT11(pin=4)
 
     if __name__ == "__main__":
         # Parse command line arguments to get service settings
